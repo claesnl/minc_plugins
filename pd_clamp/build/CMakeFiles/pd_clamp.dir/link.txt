@@ -1,0 +1,1 @@
+/usr/bin/clang++   -O3 -msse4.2 -m64 -Wextra -Wall -pedantic -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/pd_clamp.dir/main.cpp.o  -o pd_clamp  /opt/minc/lib/libminc2.dylib /opt/minc/lib/libvolume_io2.dylib 
