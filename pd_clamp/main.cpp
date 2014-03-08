@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 {
 	
 	pname = argv[0];
-	if(ParseArgv(&argc, argv, argTable, 0) || argc < 2)
+	if(ParseArgv(&argc, argv, argTable, 0) || argc < 4)
 	{
       	(void) fprintf(stderr, "\nUsage: %s [options] <in1.mnc> <in2.mnc> <out.mnc>\n", pname);
 		(void) fprintf(stderr, "       %s -help\n\n", pname);
@@ -69,19 +69,34 @@ int main(int argc, char **argv)
 	// fprintf(stdout, "infiles[1]: %s\n",infiles[1]);
 	// fprintf(stdout, "outfiles: %s\n", (char *) outfiles[0]);
 	// fprintf(stdout, "mask: %s\n", (char *) mask);
+	
+	/* make temporary minc 2.0 files */
+	std::system("mkdir /tmp/minc_plugins/");
+	std::string in1 = "mincconvert ";
+	in1 += infiles[0];
+	in1 += " -2 /tmp/minc_plugins/in1.mnc";
+	std::system(in1.c_str());
+	std::string in2 = "mincconvert ";
+	in2 += infiles[1];
+	in2 += " -2 /tmp/minc_plugins/in2.mnc";
+	std::system(in2.c_str());
 
-	if (miopen_volume(infiles[0], MI2_OPEN_RDWR, &minc_volume1) != MI_NOERROR)
+	if (miopen_volume("/tmp/minc_plugins/in1.mnc", MI2_OPEN_RDWR, &minc_volume1) != MI_NOERROR)
 	{
 		fprintf(stderr, "Error opening input file: %s.\n",infiles[0]);
 		exit(EXIT_FAILURE);
 	}
-	if (miopen_volume(infiles[1], MI2_OPEN_RDWR, &minc_volume2) != MI_NOERROR)
+	if (miopen_volume("/tmp/minc_plugins/in2.mnc", MI2_OPEN_RDWR, &minc_volume2) != MI_NOERROR)
 	{
 		fprintf(stderr, "Error opening input file: %s.\n",infiles[1]);
 		exit(EXIT_FAILURE);
 	}
 	if (mask != NULL){
-		if (miopen_volume(mask, MI2_OPEN_RDWR, &mask_volume) != MI_NOERROR)
+		std::string in_mask = "mincconvert ";
+		in_mask += mask;
+		in_mask += " -2 /tmp/minc_plugins/mask.mnc";
+		std::system(in_mask.c_str());
+		if (miopen_volume("/tmp/minc_plugins/mask.mnc", MI2_OPEN_RDWR, &mask_volume) != MI_NOERROR)
 		{
 			fprintf(stderr, "Error opening mask file: %s.\n",mask);
 			exit(EXIT_FAILURE);
@@ -178,7 +193,7 @@ int main(int argc, char **argv)
 	}
 	
 	/* create the new volume */
-	if (micreate_volume(outfiles[0], 3, dimensions_new, MI_TYPE_UBYTE,
+	if (micreate_volume("/tmp/minc_plugins/new_volume.mnc", 3, dimensions_new, MI_TYPE_UBYTE,
 	MI_CLASS_REAL, NULL, &new_volume) != MI_NOERROR) {
 		fprintf(stderr, "Error creating new volume\n");
 		return(1);
@@ -216,6 +231,13 @@ int main(int argc, char **argv)
 		free(slab_mask);	
 		miclose_volume(mask_volume);
 	}
+	
+	std::string s_outfiles = "mincconvert -clobber /tmp/minc_plugins/new_volume.mnc ";
+	s_outfiles += outfiles[0];
+	std::cout << s_outfiles << std::endl;
+	std::system(s_outfiles.c_str());
+	
+	std::system("rm -rf /tmp/minc_plugins/");
 
 	return(0);
 }
