@@ -72,11 +72,11 @@ int main(int argc, char **argv)
 	
 	/* make temporary minc 2.0 files */
 	std::system("mkdir /tmp/minc_plugins/");
-	std::string in1 = "mincconvert ";
+	std::string in1 = "mincconvert -clobber ";
 	in1 += infiles[0];
 	in1 += " -2 /tmp/minc_plugins/in1.mnc";
 	std::system(in1.c_str());
-	std::string in2 = "mincconvert ";
+	std::string in2 = "mincconvert -clobber ";
 	in2 += infiles[1];
 	in2 += " -2 /tmp/minc_plugins/in2.mnc";
 	std::system(in2.c_str());
@@ -92,11 +92,18 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	if (mask != NULL){
-		std::string in_mask = "mincconvert ";
+		std::string in_mask = "mincresample -quiet -clobber ";
+		in_mask += mask;
+		in_mask += " -2 -like /tmp/minc_plugins/in1.mnc /tmp/minc_plugins/mask.mnc";
+		std::system(in_mask.c_str());
+		std::system("mincmath -quiet -clobber -gt -const 0.5 /tmp/minc_plugins/mask.mnc /tmp/minc_plugins/mask_bin.mnc");
+		/*
+		std::string in_mask = "mincconvert -clobber ";
 		in_mask += mask;
 		in_mask += " -2 /tmp/minc_plugins/mask.mnc";
 		std::system(in_mask.c_str());
-		if (miopen_volume("/tmp/minc_plugins/mask.mnc", MI2_OPEN_RDWR, &mask_volume) != MI_NOERROR)
+		*/
+		if (miopen_volume("/tmp/minc_plugins/mask_bin.mnc", MI2_OPEN_RDWR, &mask_volume) != MI_NOERROR)
 		{
 			fprintf(stderr, "Error opening mask file: %s.\n",mask);
 			exit(EXIT_FAILURE);
@@ -234,7 +241,6 @@ int main(int argc, char **argv)
 	
 	std::string s_outfiles = "mincconvert -clobber /tmp/minc_plugins/new_volume.mnc ";
 	s_outfiles += outfiles[0];
-	std::cout << s_outfiles << std::endl;
 	std::system(s_outfiles.c_str());
 	
 	std::system("rm -rf /tmp/minc_plugins/");
